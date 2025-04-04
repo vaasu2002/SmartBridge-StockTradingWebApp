@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate,Link } from 'react-router-dom';
 import { 
   Plus, Minus, Search, Maximize, Home, 
   ChevronDown, Settings, Star, Clock, BarChart,
-  TrendingUp, TrendingDown, DollarSign, CreditCard
+  TrendingUp, TrendingDown, DollarSign, CreditCard,ChevronLeft
 } from 'lucide-react';
 
 const StockDetailView = () => {
@@ -23,7 +23,7 @@ const StockDetailView = () => {
   const [orderType, setOrderType] = useState('Buy'); // Track the current order type (Buy or Sell)
   
   // Mock candle data
-  const candleData = [
+  let candleData = [
     { time: '08:55:00', open: 228.10, high: 228.45, low: 227.90, close: 228.30 },
     { time: '09:00:00', open: 228.30, high: 229.20, low: 228.25, close: 229.00 },
     { time: '09:05:00', open: 229.00, high: 229.35, low: 228.80, close: 229.20 },
@@ -75,7 +75,7 @@ const StockDetailView = () => {
             high: 226.13,
             low: 225.84,
             close: 225.96001,
-            price: 225.60001, // Current price
+            price: 225.60001+getRandomFloat(), // Current price
             change: -0.36,
             changePercent: -0.16,
             volume: 28976543,
@@ -282,6 +282,9 @@ const StockDetailView = () => {
   };
   
   // Find min and max price for chart scaling
+  function getRandomFloat() {
+      return Math.random() * 40 - 20;
+  }
   const allPrices = candleData.flatMap(candle => [candle.high, candle.low]);
   const maxPrice = Math.max(...allPrices);
   const minPrice = Math.min(...allPrices);
@@ -302,6 +305,9 @@ const StockDetailView = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            <Link to="/market" className="mr-2 flex items-center">
+              <ChevronLeft className="h-5 w-5 text-gray-500 mr-1" />
+            </Link>
             {/* Stock header with controls */}
             <div className="bg-white shadow-md rounded-lg p-5">
               <div className="flex flex-wrap justify-between items-center">

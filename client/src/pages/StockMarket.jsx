@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, TrendingUp, TrendingDown, Filter, ArrowUpDown,
+  Search, TrendingUp, TrendingDown, Filter,
   Star, StarOff, RefreshCw, ExternalLink, LogOut
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -26,9 +26,13 @@ const StockMarket = () => {
   // Check login status on component mount
   useEffect(() => {
     const authToken = localStorage.getItem('authToken');
+    const usertype = localStorage.getItem('usertype');
     setIsLoggedIn(!!authToken);
     if(!authToken){
       navigate('/')
+    }
+    else if(usertype==='Admin'){
+      navigate('/admin/dashboard')
     }
     
     // Load watchlist from localStorage
@@ -53,7 +57,10 @@ const StockMarket = () => {
   // Mock data for filters
   const exchanges = ['NASDAQ', 'NYSE', 'LSE', 'TSX', 'NSE', 'BSE'];
   const sectors = ['Technology', 'Healthcare', 'Financial Services', 'Consumer Cyclical', 'Energy', 'Utilities', 'Real Estate', 'Communication Services', 'Industrials', 'Basic Materials', 'Consumer Defensive'];
-  
+  function getRandomFloat() {
+      return Math.random() * 40 - 20;
+  }
+  const p = 215.43
   useEffect(() => {
     // Fetch stock data
     const fetchStockData = async () => {
@@ -66,7 +73,7 @@ const StockMarket = () => {
               id: 'aapl',
               symbol: 'AAPL', 
               name: 'Apple Inc.', 
-              price: 178.72, 
+              price: p+getRandomFloat(), 
               change: 3.51, 
               changePercent: 2.00,
               volume: 78945612,
@@ -78,7 +85,7 @@ const StockMarket = () => {
               id: 'msft',
               symbol: 'MSFT', 
               name: 'Microsoft Corporation', 
-              price: 329.37, 
+              price: p+getRandomFloat(), 
               change: 4.05, 
               changePercent: 1.24,
               volume: 25678934,
@@ -90,7 +97,7 @@ const StockMarket = () => {
               id: 'googl',
               symbol: 'GOOGL', 
               name: 'Alphabet Inc.', 
-              price: 142.65, 
+              price: p+getRandomFloat(), 
               change: -1.98, 
               changePercent: -1.37,
               volume: 18975345,
@@ -102,7 +109,7 @@ const StockMarket = () => {
               id: 'amzn',
               symbol: 'AMZN', 
               name: 'Amazon.com Inc.', 
-              price: 182.81, 
+              price: p+getRandomFloat(), 
               change: 2.35, 
               changePercent: 1.30,
               volume: 32456789,
@@ -114,7 +121,7 @@ const StockMarket = () => {
               id: 'meta',
               symbol: 'META', 
               name: 'Meta Platforms, Inc.', 
-              price: 326.49, 
+              price: p+getRandomFloat(),  
               change: -0.75, 
               changePercent: -0.23,
               volume: 15687432,
@@ -126,7 +133,7 @@ const StockMarket = () => {
               id: 'tsla',
               symbol: 'TSLA', 
               name: 'Tesla, Inc.', 
-              price: 177.67, 
+              price: p+getRandomFloat(),  
               change: -5.32, 
               changePercent: -2.91,
               volume: 45678932,
@@ -138,7 +145,7 @@ const StockMarket = () => {
               id: 'nvda',
               symbol: 'NVDA', 
               name: 'NVIDIA Corporation', 
-              price: 455.72, 
+              price: p+getRandomFloat(),  
               change: 7.89, 
               changePercent: 1.76,
               volume: 28765439,
@@ -150,7 +157,7 @@ const StockMarket = () => {
               id: 'jpm',
               symbol: 'JPM', 
               name: 'JPMorgan Chase & Co.', 
-              price: 147.58, 
+              price: p+getRandomFloat(), 
               change: 0.95, 
               changePercent: 0.65,
               volume: 12345678,
@@ -162,7 +169,7 @@ const StockMarket = () => {
               id: 'v',
               symbol: 'V', 
               name: 'Visa Inc.', 
-              price: 256.34, 
+              price: p+getRandomFloat(),  
               change: 1.28, 
               changePercent: 0.50,
               volume: 8765432,
@@ -174,7 +181,7 @@ const StockMarket = () => {
               id: 'pg',
               symbol: 'PG', 
               name: 'The Procter & Gamble Company', 
-              price: 160.22, 
+              price: p+getRandomFloat(),  
               change: -0.32, 
               changePercent: -0.20,
               volume: 6543210,
@@ -186,7 +193,7 @@ const StockMarket = () => {
               id: 'reliance',
               symbol: 'RELIANCE.NS', 
               name: 'Reliance Industries Limited', 
-              price: 2432.15, 
+              price: p+getRandomFloat(),  
               change: 45.30, 
               changePercent: 1.90,
               volume: 3456789,
@@ -198,7 +205,7 @@ const StockMarket = () => {
               id: 'hsbc',
               symbol: 'HSBC', 
               name: 'HSBC Holdings plc', 
-              price: 39.45, 
+              price: p+getRandomFloat(),  
               change: 0.25, 
               changePercent: 0.64,
               volume: 5678901,
@@ -401,6 +408,12 @@ const StockMarket = () => {
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Wallet
+              </Link>
+              <Link
+                to="/orders"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Orders
               </Link>
             </div>
             

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import { Link } from 'react-router-dom';
 import { 
   ArrowUpRight, 
@@ -7,9 +8,9 @@ import {
   RefreshCw,
   Search,
   DollarSign,
-  BarChart2,
   PieChart,
-  TrendingUp 
+  TrendingUp,
+  ChevronLeft
 } from 'lucide-react';
 
 const PortfolioPage = () => {
@@ -73,9 +74,8 @@ const PortfolioPage = () => {
           ? (totalChangeValue / totalStockValue) * 100
           : 0;
           
-        setTotalValue(totalStockValue+totalStockValue*overallPercentChange);
         setTotalPercentChange(overallPercentChange);
-        setTotalValue(totalStockValue+totalStockValue*overallPercentChange);
+        setTotalValue(totalStockValue*(overallPercentChange/100));
       } else {
         setError(result.message || 'Failed to fetch portfolio data');
       }
@@ -118,16 +118,19 @@ const PortfolioPage = () => {
   return (
     <div className="min-h-screen bg-slate-100">
       <main className="container mx-auto px-4 py-6">
-        <div className="mb-6">
+        <div className="flex items-center mb-6">
+          <Link to="/market" className="mr-2">
+            <ChevronLeft className="h-5 w-5 text-gray-500" />
+          </Link>
           <h1 className="text-2xl font-bold text-gray-900">My Portfolio</h1>
-          <p className="text-gray-600">Track your investments and performance</p>
         </div>
+        <p className="text-gray-600">Track your investments and performance</p>
         
         {/* Portfolio summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-gray-600 font-medium">Total Value</h2>
+              <h2 className="text-gray-600 font-medium">Oversall profit</h2>
               <DollarSign className="h-5 w-5 text-blue-600" />
             </div>
             <div className="text-2xl font-bold text-gray-900">

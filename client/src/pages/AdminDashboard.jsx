@@ -1,36 +1,31 @@
-// src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, Users, ShoppingCart, DollarSign, Home, 
   TrendingUp, ArrowUpRight, ArrowDownRight, Activity,
-  CreditCard, AlertTriangle, PieChart, Calendar
+  CreditCard, AlertTriangle, Calendar,
+  RefreshCw, Wallet,
+  TrendingDown, User
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-// Sample chart data (would come from API in a real app)
-const marketOverviewData = [
-  { month: 'Jan', value: 75 },
-  { month: 'Feb', value: 85 },
-  { month: 'Mar', value: 78 },
-  { month: 'Apr', value: 92 },
-  { month: 'May', value: 98 },
-  { month: 'Jun', value: 106 },
-  { month: 'Jul', value: 100 },
-  { month: 'Aug', value: 92 },
-  { month: 'Sep', value: 116 },
-  { month: 'Oct', value: 124 },
-  { month: 'Nov', value: 118 },
-  { month: 'Dec', value: 138 }
-];
+import { Link,useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    newUsers: 0,
     totalStocks: 0,
-    totalTransactions: 0,
-    totalValue: 0
+    totalPortfolioValue: '0',
+    transactions: {
+      total: 0,
+      recent: 0,
+      details: {}
+    }
   });
+  
+  const [refreshing, setRefreshing] = useState(false);
   
   // Recent transactions (mock data)
   const [recentTransactions, setRecentTransactions] = useState([]);
@@ -39,71 +34,55 @@ const AdminDashboard = () => {
   const [alerts, setAlerts] = useState([]);
   
   useEffect(() => {
-    // Simulate API calls to fetch dashboard data
+    const userType = localStorage.getItem('usertype');
+    if(!userType || userType==='Customer'){
+      navigate('/');
+    }
+    // Fetch dashboard data
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         
-        // In a real app, these would be actual API calls
-        // const statsResponse = await fetch('/api/admin/dashboard/stats');
-        // const statsData = await statsResponse.json();
+        // Actual API call
+        const statsResponse = await fetch('http://localhost:3001/api/admin/stats');
+        const statsData = await statsResponse.json();
         
-        // Mock data for demonstration
-        setTimeout(() => {
+        if (statsData.success) {
           setStats({
-            totalUsers: 12547,
-            totalStocks: 258,
-            totalTransactions: 47892,
-            totalValue: 286459.45
+            totalUsers: statsData.data.totalUsers,
+            activeUsers: statsData.data.activeUsers,
+            inactiveUsers: statsData.data.inactiveUsers,
+            newUsers: statsData.data.newUsers,
+            totalStocks: 12, // Mock data
+            totalPortfolioValue: statsData.data.totalPortfolioValue,
+            transactions: statsData.data.transactions
           });
           
-          setRecentTransactions([
-            { 
-              id: 1, 
-              user: 'John Smith', 
-              type: 'buy', 
-              symbol: 'AAPL', 
-              amount: 4850.75, 
-              shares: 25, 
-              date: '2023-10-15T14:32:17' 
-            },
-            { 
-              id: 2, 
-              user: 'Emily Johnson', 
-              type: 'sell', 
-              symbol: 'MSFT', 
-              amount: 7218.50, 
-              shares: 20, 
-              date: '2023-10-15T13:08:42' 
-            },
-            { 
-              id: 3, 
-              user: 'Michael Chen', 
-              type: 'buy', 
-              symbol: 'GOOGL', 
-              amount: 12840.35, 
-              shares: 10, 
-              date: '2023-10-15T11:45:09' 
-            },
-            { 
-              id: 4, 
-              user: 'Sarah Williams', 
-              type: 'buy', 
-              symbol: 'TSLA', 
-              amount: 9652.60, 
-              shares: 15, 
-              date: '2023-10-15T10:22:53' 
-            },
-            { 
-              id: 5, 
-              user: 'Robert Patel', 
-              type: 'sell', 
-              symbol: 'AMZN', 
-              amount: 3245.92, 
-              shares: 5, 
-              date: '2023-10-15T09:17:31' 
-            }
-          ]);
+          // Generate mock transaction data based on API statistics
+          const transactionTypes = Object.keys(statsData.data.transactions.details);
+          const mockTransactions = [];
+          
+          for (let i = 0; i < 5; i++) {
+            const randomType = transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
+            const isStockTransaction = randomType === 'Buy' || randomType === 'Sell';
+            const stockSymbols = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'AMZN', 'NVDA'];
+            const randomSymbol = stockSymbols[Math.floor(Math.random() * stockSymbols.length)];
+            const randomAmount = Math.floor(Math.random() * 10000) + 1000;
+            const randomShares = Math.floor(Math.random() * 30) + 5;
+            const randomUser = ['John Smith', 'Emily Johnson', 'Michael Chen', 'Sarah Williams', 'Robert Patel'][i];
+            
+            mockTransactions.push({
+              id: i + 1,
+              user: randomUser,
+              type: randomType.toLowerCase(),
+              symbol: isStockTransaction ? randomSymbol : '-',
+              amount: randomAmount,
+              shares: isStockTransaction ? randomShares : null,
+              date: new Date(Date.now() - (i * 3600000)).toISOString() 
+            });
+          }
+          
+          setRecentTransactions(mockTransactions);
           
           setAlerts([
             { 
@@ -131,10 +110,11 @@ const AdminDashboard = () => {
               date: '2023-10-15T07:00:03' 
             }
           ]);
-          
-          setLoading(false);
-        }, 1000);
+        } else {
+          console.error('Failed to fetch stats:', statsData.message);
+        }
         
+        setLoading(false);
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
         setLoading(false);
@@ -143,6 +123,33 @@ const AdminDashboard = () => {
     
     fetchDashboardData();
   }, []);
+  
+  // Refresh dashboard data
+  const refreshDashboard = async () => {
+    setRefreshing(true);
+    try {
+      const statsResponse = await fetch('http://localhost:3001/api/admin/stats');
+      const statsData = await statsResponse.json();
+      
+      if (statsData.success) {
+        setStats({
+          totalUsers: statsData.data.totalUsers,
+          activeUsers: statsData.data.activeUsers,
+          inactiveUsers: statsData.data.inactiveUsers,
+          newUsers: statsData.data.newUsers,
+          totalStocks: 12,
+          totalPortfolioValue: statsData.data.totalPortfolioValue,
+          transactions: statsData.data.transactions
+        });
+      }
+    } catch (err) {
+      console.error('Failed to refresh dashboard data', err);
+    } finally {
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 500);
+    }
+  };
   
   // Format currency
   const formatCurrency = (value) => {
@@ -165,6 +172,11 @@ const AdminDashboard = () => {
     }).format(date);
   };
   
+  // Format large numbers
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat('en-US').format(num);
+  };
+  
   // Helper for alert icon and color
   const getAlertStyles = (type) => {
     switch (type) {
@@ -179,10 +191,25 @@ const AdminDashboard = () => {
         return { icon: <Calendar className="h-5 w-5" />, color: 'text-blue-600 bg-blue-100' };
     }
   };
+  
+  // Get transaction icon
+  const getTransactionIcon = (type) => {
+    switch (type.toLowerCase()) {
+      case 'buy':
+        return <ArrowUpRight className="h-4 w-4 text-green-600" />;
+      case 'sell':
+        return <ArrowDownRight className="h-4 w-4 text-red-600" />;
+      case 'deposit':
+        return <Wallet className="h-4 w-4 text-blue-600" />;
+      case 'withdrawal':
+        return <CreditCard className="h-4 w-4 text-orange-600" />;
+      default:
+        return <DollarSign className="h-4 w-4 text-gray-600" />;
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Admin Sidebar Navigation */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64 bg-gray-800 border-r border-gray-200">
           <div className="flex items-center h-16 px-4 bg-gray-900">
@@ -234,6 +261,15 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-semibold text-gray-800">Dashboard</h1>
             
             <div className="flex items-center space-x-4">
+              <button 
+                onClick={refreshDashboard}
+                disabled={refreshing}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                <RefreshCw className={`h-5 w-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              
               <div>
                 <button
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -279,14 +315,30 @@ const AdminDashboard = () => {
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
                         <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold text-gray-900">{stats.totalUsers.toLocaleString()}</div>
-                          <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                            <ArrowUpRight className="h-4 w-4 self-center" />
-                            <span className="sr-only">Increased by</span>
-                            12.8%
-                          </div>
+                          <div className="text-2xl font-semibold text-gray-900">{formatNumber(stats.totalUsers)}</div>
+                          {stats.newUsers > 0 && (
+                            <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                              <ArrowUpRight className="h-4 w-4 self-center" />
+                              <span className="sr-only">New users</span>
+                              +{stats.newUsers}
+                            </div>
+                          )}
                         </dd>
                       </dl>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Active: {formatNumber(stats.activeUsers)}</span>
+                      <span>Inactive: {formatNumber(stats.inactiveUsers)}</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                      {stats.totalUsers > 0 && (
+                        <div 
+                          className="h-full bg-green-500 rounded-full" 
+                          style={{ width: `${(stats.activeUsers / stats.totalUsers) * 100}%` }}
+                        ></div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -300,7 +352,7 @@ const AdminDashboard = () => {
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">Active Stocks</dt>
                         <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold text-gray-900">{stats.totalStocks.toLocaleString()}</div>
+                          <div className="text-2xl font-semibold text-gray-900">{formatNumber(stats.totalStocks)}</div>
                           <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
                             <ArrowUpRight className="h-4 w-4 self-center" />
                             <span className="sr-only">Increased by</span>
@@ -308,6 +360,12 @@ const AdminDashboard = () => {
                           </div>
                         </dd>
                       </dl>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex items-center text-xs text-gray-600">
+                      <div className="mr-2 w-3 h-3 rounded-full bg-green-500"></div>
+                      <span>Trading volume up 12% this week</span>
                     </div>
                   </div>
                 </div>
@@ -321,68 +379,140 @@ const AdminDashboard = () => {
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">Total Portfolio Value</dt>
                         <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold text-gray-900">{formatCurrency(stats.totalValue)}</div>
-                          <div className="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                            <ArrowUpRight className="h-4 w-4 self-center" />
-                            <span className="sr-only">Increased by</span>
-                            18.3%
-                          </div>
+                          <div className="text-2xl font-semibold text-gray-900">{formatCurrency(stats.totalPortfolioValue)}</div>
                         </dd>
                       </dl>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>
+                        Avg. per user: {formatCurrency(stats.totalUsers > 0 ? stats.totalPortfolioValue / stats.totalUsers : 0)}
+                      </span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 rounded-md p-3 bg-red-100">
-                      <CreditCard className="h-6 w-6 text-red-600" />
+                    <div className="flex-shrink-0 rounded-md p-3 bg-purple-100">
+                      <CreditCard className="h-6 w-6 text-purple-600" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">Transactions</dt>
                         <dd className="flex items-baseline">
-                          <div className="text-2xl font-semibold text-gray-900">{stats.totalTransactions.toLocaleString()}</div>
-                          <div className="ml-2 flex items-baseline text-sm font-semibold text-red-600">
-                            <ArrowDownRight className="h-4 w-4 self-center" />
-                            <span className="sr-only">Decreased by</span>
-                            3.5%
+                          <div className="text-2xl font-semibold text-gray-900">{formatNumber(stats.transactions.total)}</div>
+                          <div className="ml-2 flex items-baseline text-sm font-semibold text-blue-600">
+                            <span className="sr-only">Recent</span>
+                            {stats.transactions.recent} recent
                           </div>
                         </dd>
                       </dl>
                     </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Market Overview Chart */}
-                <div className="bg-white rounded-lg shadow p-6 col-span-2">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-medium text-gray-900">Market Overview</h2>
-                    <div className="flex items-center space-x-2">
-                      <select className="text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
-                        <option>This Year</option>
-                        <option>Last Year</option>
-                        <option>Last 6 Months</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="h-64">
-                    {/* This would be a chart component in a real app */}
-                    <div className="h-full flex items-end justify-between space-x-2">
-                      {marketOverviewData.map((item, index) => (
-                        <div key={index} className="flex flex-col items-center" style={{ width: `${100 / marketOverviewData.length}%` }}>
-                          <div 
-                            className="w-full bg-blue-500 rounded-t-sm" 
-                            style={{ height: `${(item.value / 140) * 100}%` }}
-                          ></div>
-                          <div className="text-xs text-gray-500 mt-1">{item.month}</div>
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">
+                      {stats.transactions.details && Object.entries(stats.transactions.details).map(([type, data]) => (
+                        <div key={type} className="flex items-center">
+                          <div className={`mr-1 w-2 h-2 rounded-full ${
+                            type === 'Buy' ? 'bg-green-500' : 
+                            type === 'Sell' ? 'bg-red-500' : 
+                            'bg-blue-500'
+                          }`}></div>
+                          <span>{type}: {data.count}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
+              </div>
+              
+              {/* Transaction details cards */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {stats.transactions.details && (
+                  <>
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <h2 className="text-lg font-medium text-gray-900 mb-4">Transaction Volume</h2>
+                      <div className="space-y-4">
+                        {Object.entries(stats.transactions.details).map(([type, data]) => (
+                          <div key={type} className="flex items-center">
+                            <div className={`flex-shrink-0 rounded-md p-2 ${
+                              type === 'Buy' ? 'bg-green-100 text-green-600' : 
+                              type === 'Sell' ? 'bg-red-100 text-red-600' : 
+                              'bg-blue-100 text-blue-600'
+                            }`}>
+                              {type === 'Buy' ? <TrendingUp className="h-5 w-5" /> : 
+                               type === 'Sell' ? <TrendingDown className="h-5 w-5" /> : 
+                               <Wallet className="h-5 w-5" />}
+                            </div>
+                            <div className="ml-4 flex-1">
+                              <div className="flex justify-between">
+                                <span className="text-sm font-medium text-gray-900">{type} Transactions</span>
+                                <span className="text-sm font-medium text-gray-900">{data.count}</span>
+                              </div>
+                              <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+                                <div 
+                                  className={`h-full rounded-full ${
+                                    type === 'Buy' ? 'bg-green-500' : 
+                                    type === 'Sell' ? 'bg-red-500' : 
+                                    'bg-blue-500'
+                                  }`}
+                                  style={{ width: `${(data.count / stats.transactions.total) * 100}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <h2 className="text-lg font-medium text-gray-900 mb-4">Transaction Value</h2>
+                      <div className="space-y-4">
+                        {Object.entries(stats.transactions.details).map(([type, data]) => {
+                          // Calculate total value from all transaction types
+                          const totalValue = Object.values(stats.transactions.details).reduce((sum, item) => 
+                            sum + parseFloat(item.totalAmount), 0
+                          );
+                          
+                          return (
+                            <div key={type} className="flex items-center">
+                              <div className={`flex-shrink-0 rounded-md p-2 ${
+                                type === 'Buy' ? 'bg-green-100 text-green-600' : 
+                                type === 'Sell' ? 'bg-red-100 text-red-600' : 
+                                'bg-blue-100 text-blue-600'
+                              }`}>
+                                <DollarSign className="h-5 w-5" />
+                              </div>
+                              <div className="ml-4 flex-1">
+                                <div className="flex justify-between">
+                                  <span className="text-sm font-medium text-gray-900">{type} Value</span>
+                                  <span className="text-sm font-medium text-gray-900">{formatCurrency(data.totalAmount)}</span>
+                                </div>
+                                <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+                                  <div 
+                                    className={`h-full rounded-full ${
+                                      type === 'Buy' ? 'bg-green-500' : 
+                                      type === 'Sell' ? 'bg-red-500' : 
+                                      'bg-blue-500'
+                                    }`}
+                                    style={{ width: `${(parseFloat(data.totalAmount) / totalValue) * 100}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Market Overview Chart */}
+                
                 
                 {/* Alerts & Notifications */}
                 <div className="bg-white rounded-lg shadow p-6">
@@ -409,55 +539,113 @@ const AdminDashboard = () => {
                 </div>
               </div>
               
-              {/* Recent Transactions */}
-              <div className="mt-6 bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-medium text-gray-900">Recent Transactions</h2>
-                    <Link to="/admin/transactions" className="text-sm text-blue-600 hover:text-blue-800">View All</Link>
+              {/* User Activity & Trends */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">User Activity</h2>
+                  <div className="flex space-x-8">
+                    <div className="flex-1">
+                      <div className="flex flex-col space-y-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 rounded-md p-2 bg-green-100 text-green-600">
+                            <User className="h-5 w-5" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">Active Users</p>
+                            <p className="text-lg font-semibold text-gray-900">{stats.activeUsers}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 rounded-md p-2 bg-gray-100 text-gray-600">
+                            <User className="h-5 w-5" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">Inactive Users</p>
+                            <p className="text-lg font-semibold text-gray-900">{stats.inactiveUsers}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 rounded-md p-2 bg-blue-100 text-blue-600">
+                            <User className="h-5 w-5" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">New Users (Last 7 days)</p>
+                            <p className="text-lg font-semibold text-gray-900">{stats.newUsers}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="relative h-32 w-32">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <p className="text-sm font-medium text-gray-500">Users</p>
+                        </div>
+                        {/* Simple circle chart for user activity */}
+                        <svg className="w-full h-full" viewBox="0 0 100 100">
+                          {/* Background circle */}
+                          <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                          
+                          {/* Active users segment */}
+                          {stats.totalUsers > 0 && (
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="40"
+                              fill="none"
+                              stroke="#22c55e"
+                              strokeWidth="10"
+                              strokeDasharray={`${(stats.activeUsers / stats.totalUsers) * 251.2} 251.2`}
+                              transform="rotate(-90 50 50)"
+                            />
+                          )}
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {recentTransactions.map((transaction) => (
-                        <tr key={transaction.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{transaction.user}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              transaction.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {transaction.type.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{transaction.symbol}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{transaction.shares}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{formatCurrency(transaction.amount)}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(transaction.date)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">Transaction Breakdown</h2>
+                  <div className="space-y-4">
+                    {stats.transactions.details && Object.entries(stats.transactions.details).map(([type, data]) => {
+                      const totalValue = Object.values(stats.transactions.details).reduce((sum, item) => sum + item.count, 0);
+                      const percentage = totalValue > 0 ? Math.round((data.count / totalValue) * 100) : 0;
+                      
+                      return (
+                        <div key={type} className="flex items-center">
+                          <div className={`flex-shrink-0 rounded-md p-2 ${
+                            type === 'Buy' ? 'bg-green-100 text-green-600' : 
+                            type === 'Sell' ? 'bg-red-100 text-red-600' : 
+                            'bg-blue-100 text-blue-600'
+                          }`}>
+                            {type === 'Buy' ? <TrendingUp className="h-5 w-5" /> : 
+                             type === 'Sell' ? <TrendingDown className="h-5 w-5" /> : 
+                             <Wallet className="h-5 w-5" />}
+                          </div>
+                          <div className="ml-3 flex-1">
+                            <div className="flex justify-between">
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{type}</p>
+                                <p className="text-xs text-gray-500">{data.count} transactions</p>
+                              </div>
+                              <p className="text-sm font-medium text-gray-900">{percentage}%</p>
+                            </div>
+                            <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
+                              <div 
+                                className={`h-full rounded-full ${
+                                  type === 'Buy' ? 'bg-green-500' : 
+                                  type === 'Sell' ? 'bg-red-500' : 
+                                  'bg-blue-500'
+                                }`}
+                                style={{ width: `${percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </>

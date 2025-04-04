@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,Link } from 'react-router-dom';
 import { 
   DollarSign, CreditCard, Calendar, ArrowDownCircle, 
   ArrowUpCircle, Clock, ChevronDown, Search, Filter, 
-  Download, RefreshCw, ShoppingCart, TrendingDown
+  Download, RefreshCw, ShoppingCart, TrendingDown,ChevronLeft
 } from 'lucide-react';
 
 const Wallet = () => {
@@ -344,6 +344,10 @@ const Wallet = () => {
           <div className="bg-white shadow-md rounded-lg p-6">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center">
               <div>
+              <Link to="/market" className="mr-2 flex items-center">
+                <ChevronLeft className="h-5 w-5 text-gray-500 mr-1" />
+                Wallet
+              </Link>
                 <h2 className="text-lg font-medium text-gray-700">Available Balance</h2>
                 <div className="mt-2 text-3xl font-bold">{formatCurrency(balance)}</div>
               </div>

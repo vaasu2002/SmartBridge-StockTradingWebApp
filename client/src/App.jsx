@@ -10,10 +10,12 @@ import AdminDashboard from './pages/AdminDashboard';
 import StockDetailView from './pages/StockDetailView';
 import Wallet from './pages/Wallet';
 import PortfolioPage from './pages/Portfolio';
+import AdminTransaction from './pages/AdminTransaction';
 
 import './App.css'
 import StockDetails from './pages/StockDetails';
 import StockMarket from './pages/StockMarket';
+import OrdersPage from './pages/Orders';
 
 
 // Mock authentication context (would be replaced with real auth in production)
@@ -88,6 +90,13 @@ function App() {
             } 
           />
           <Route 
+            path="/admin/transactions" 
+            element={
+                <AdminTransaction />
+              
+            } 
+          />
+          <Route 
             path="/stock" 
             element={
               // <ProtectedAdminRoute></ProtectedAdminRoute>
@@ -106,6 +115,12 @@ function App() {
             path="/trading/:symbol" 
             element={
                 <StockDetailView />
+            } 
+          />
+          <Route 
+            path="/orders" 
+            element={
+                <OrdersPage />
             } 
           />
            <Route 

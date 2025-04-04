@@ -1,6 +1,5 @@
 const {User,Transaction,Order,Stock} = require('../model');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
 const register = async ( req,res ) => {
     try {
@@ -271,6 +270,27 @@ const getPortfolio = async ( req,res ) => {
     }
 }
 
+const getOrders = async ( req,res ) => {
+    try{
+        const id = req.params.id;
+        const stocks = await Order.find({user:id});
+        return res.status(200).json({
+            success:true,
+            message:'Recieved all orders',
+            data: stocks,
+            err:{}
+        });
+    }catch(error){
+        console.log(error)
+        return res.status(500).json({
+            success:false,
+            message:'Error Encountered in depositing money',
+            data: {},
+            err:error
+        });
+    }
+}
+
 module.exports = { 
     register,
     login,
@@ -278,5 +298,6 @@ module.exports = {
     getAllUserTransaction,
     orderStock,
     getUserDetails,
-    getPortfolio
+    getPortfolio,
+    getOrders
 };
